@@ -14,16 +14,6 @@
 
 本工具**不修改、不绕过游戏本身的任何验证或业务逻辑**,只是在 HTTP 层面复用了浏览器/CDN 早已支持的标准协商缓存机制,效果类似于给指定资源手动做了一层更可控的本地 CDN 缓存。
 
-## 目录结构
-
-```
-gbf-local-cache/
-├── main.py            # 核心拦截逻辑(拦截请求、条件校验、读写本地缓存)
-├── config.py          # 可调整的配置项(缓存目录、目标域名规则等)
-├── start_proxy.bat    # 一键启动代理的脚本(支持隐藏窗口运行)
-└── README.md
-```
-
 ## 环境依赖
 
 - **Python 3.8+**:访问 [python.org/downloads](https://www.python.org/downloads/) 下载并安装对应系统的安装包(安装时建议勾选 "Add Python to PATH")。
@@ -34,10 +24,14 @@ gbf-local-cache/
 打开 `config.py` 按需修改:
 
 ```python
+import os
 import re
 
-# 本地缓存存放目录
-LOCAL_ROOT = r"D:\gbf_cache"
+# 脚本自身所在目录,用于把缓存目录/日志文件固定到这里,避免相对路径受工作目录影响
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 本地缓存存放目录(默认在脚本所在目录下的 cache 文件夹)
+LOCAL_ROOT = os.path.join(BASE_DIR, "cache")
 
 # 需要拦截的资源域名规则(正则表达式),默认匹配碧蓝幻想的多个CDN镜像域名
 TARGET_DOMAIN_PATTERN = re.compile(r"prd-game-a\d*-(granbluefantasy|gbf)\.akamaized\.net$")
@@ -45,8 +39,6 @@ TARGET_DOMAIN_PATTERN = re.compile(r"prd-game-a\d*-(granbluefantasy|gbf)\.akamai
 # 条件请求超时时间(秒)
 REQUEST_TIMEOUT = 5
 ```
-
-如果要用于其他网页游戏,只需替换 `TARGET_DOMAIN_PATTERN` 为对应的资源 CDN 域名规则即可,无需改动 `main.py`。
 
 ## 使用方法
 
@@ -85,7 +77,7 @@ REQUEST_TIMEOUT = 5
 
 3. 首次启动代理后,访问 `http://mitm.it`,下载并安装对应系统的 mitmproxy CA 证书(用于解密 HTTPS 流量),安装到"受信任的根证书颁发机构"。
 
-4. 重启浏览器,正常游玩游戏。运行日志(命令行方式为终端窗口,`.bat` 隐藏方式为 `proxy_console.log`)会打印以下几种状态,便于确认工作情况:
+4. 重启浏览器,正常游玩游戏。cache_log.txt(位于脚本所在目录)会打印以下几种状态,便于确认工作情况:
    - `[首次缓存]`:本地无缓存,已从服务器下载并保存
    - `[命中,304确认未变]`:本地缓存有效,服务器确认无变化,未重新下载
    - `[已更新]`:服务器资源已变化,已重新下载并更新本地缓存

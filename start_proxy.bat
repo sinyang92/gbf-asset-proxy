@@ -14,6 +14,8 @@ set SCRIPT_DIR=%~dp0
 set MAIN_SCRIPT=%SCRIPT_DIR%main.py
 :: ============================
 
-mitmdump -s "%MAIN_SCRIPT%" -p %PROXY_PORT% > "%SCRIPT_DIR%proxy_console.log" 2>&1
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort %PROXY_PORT% -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
+
+mitmdump -s "%MAIN_SCRIPT%" -p %PROXY_PORT%
 
 endlocal

@@ -1,9 +1,12 @@
+import os
 import re
 
-LOCAL_ROOT = r"D:\gbf_cache"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+LOCAL_ROOT = os.path.join(BASE_DIR, "cache")
 
 TARGET_DOMAIN_PATTERN = re.compile(r"prd-game-a\d*-(granbluefantasy|gbf)\.akamaized\.net$")
 
 REQUEST_TIMEOUT = 5
 
-CACHE_LOG_FILE = "cache_log.txt"
+CACHE_LOG_FILE = os.path.join(BASE_DIR, "cache_log.txt")
