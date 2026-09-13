@@ -12,10 +12,14 @@ setlocal
 set PROXY_PORT=8888
 set SCRIPT_DIR=%~dp0
 set MAIN_SCRIPT=%SCRIPT_DIR%main.py
+set UPSTREAM_PROXY=
 :: ============================
 
 powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort %PROXY_PORT% -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
 
-mitmdump -s "%MAIN_SCRIPT%" -p %PROXY_PORT%
+set MODE_ARG=
+if not "%UPSTREAM_PROXY%"=="" set MODE_ARG=--mode upstream:%UPSTREAM_PROXY%
+
+mitmdump -s "%MAIN_SCRIPT%" -p %PROXY_PORT% %MODE_ARG%
 
 endlocal

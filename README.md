@@ -36,9 +36,29 @@ LOCAL_ROOT = os.path.join(BASE_DIR, "cache")
 # 需要拦截的资源域名规则(正则表达式),默认匹配碧蓝幻想的多个CDN镜像域名
 TARGET_DOMAIN_PATTERN = re.compile(r"prd-game-a\d*-(granbluefantasy|gbf)\.akamaized\.net$")
 
+# 上游代理(可选)。如果你用的是像 Clash Verge 这种"系统代理"模式的VPN/加速器工具,
+# 需要把请求转发给它,填它监听的地址,例如 "http://127.0.0.1:7890";
+# 如果没有VPN,或者VPN用的是TUN模式(虚拟网卡,不依赖系统代理),保持 None 即可,不需要改。
+UPSTREAM_PROXY = None
+
 # 条件请求超时时间(秒)
 REQUEST_TIMEOUT = 5
 ```
+
+### 与 VPN/加速器共存
+
+- **VPN 是 TUN 模式(虚拟网卡)**:不涉及系统代理设置,和本工具的代理机制作用在不同层面,不冲突,`UPSTREAM_PROXY` 保持 `None` 即可,`start_proxy.bat` 里的 `UPSTREAM_PROXY` 变量也留空。
+- **VPN/加速器是"系统代理"模式**(如 Clash Verge 开启系统代理而非 TUN):浏览器同一时间只能指定一个代理地址,需要让本工具的代理"转发"给它,即链路变成 `浏览器 → 本工具(8888) → VPN代理端口 → 游戏服务器`。这种情况下需要同时改两处:
+  1. `config.py` 里的 `UPSTREAM_PROXY` 填上 VPN/加速器监听的地址,例如:
+     ```python
+     UPSTREAM_PROXY = "http://127.0.0.1:7890"
+     ```
+  2. `start_proxy.bat` 顶部的 `UPSTREAM_PROXY` 变量同步填上一样的地址:
+     ```bat
+     set UPSTREAM_PROXY=http://127.0.0.1:7890
+     ```
+
+两处都留空(默认状态)时,本工具会直接连接游戏服务器,不经过任何上游代理,适用于没有VPN或使用TUN模式的情况。
 
 ## 使用方法
 

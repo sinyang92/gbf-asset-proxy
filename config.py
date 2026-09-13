@@ -7,6 +7,8 @@ LOCAL_ROOT = os.path.join(BASE_DIR, "cache")
 
 TARGET_DOMAIN_PATTERN = re.compile(r"prd-game-a\d*-(granbluefantasy|gbf)\.akamaized\.net$")
 
+UPSTREAM_PROXY = None
+
 REQUEST_TIMEOUT = 5
 
 CACHE_LOG_FILE = os.path.join(BASE_DIR, "cache_log.txt")
