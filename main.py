@@ -2,10 +2,19 @@ import os
 import json
 import time
 import hashlib
+import logging
 from mitmproxy import http
 import requests
 
-from config import LOCAL_ROOT, TARGET_DOMAIN_PATTERN, REQUEST_TIMEOUT
+from config import LOCAL_ROOT, TARGET_DOMAIN_PATTERN, REQUEST_TIMEOUT, CACHE_LOG_FILE
+
+_handler = logging.FileHandler(CACHE_LOG_FILE, mode="w", encoding="utf-8")
+_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+
+logger = logging.getLogger("gbf_cache")
+logger.setLevel(logging.INFO)
+logger.addHandler(_handler)
+logger.addHandler(logging.StreamHandler())
 
 
 def is_target(host: str) -> bool:
@@ -71,7 +80,7 @@ def request(flow: http.HTTPFlow) -> None:
                 200, content,
                 {"Content-Type": meta.get("ct", "application/octet-stream")}
             )
-            print(f"[命中,304确认未变] {flow.request.path}")
+            logger.info(f"[命中,304确认未变] {flow.request.path}")
         else:
             new_content = resp.content
             os.makedirs(os.path.dirname(local_file), exist_ok=True)
@@ -83,7 +92,7 @@ def request(flow: http.HTTPFlow) -> None:
                 200, new_content,
                 {"Content-Type": resp.headers.get("Content-Type", "application/octet-stream")}
             )
-            print(f"[已更新] {flow.request.path}")
+            logger.info(f"[已更新] {flow.request.path}")
 
     except requests.RequestException as e:
         with open(local_file, "rb") as f:
@@ -92,7 +101,7 @@ def request(flow: http.HTTPFlow) -> None:
             200, content,
             {"Content-Type": meta.get("ct", "application/octet-stream")}
         )
-        print(f"[网络异常,降级用本地] {flow.request.path} ({e})")
+        logger.info(f"[网络异常,降级用本地] {flow.request.path} ({e})")
 
 
 def response(flow: http.HTTPFlow) -> None:
@@ -108,4 +117,4 @@ def response(flow: http.HTTPFlow) -> None:
         with open(local_file, "wb") as f:
             f.write(content)
         save_meta(meta_file, flow.response.headers, content)
-        print(f"[首次缓存] {flow.request.path}")
+        logger.info(f"[首次缓存] {flow.request.path}")

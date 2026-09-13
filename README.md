@@ -18,20 +18,16 @@
 
 ```
 gbf-local-cache/
-├── main.py       # 核心拦截逻辑(拦截请求、条件校验、读写本地缓存)
-├── config.py     # 可调整的配置项(缓存目录、目标域名规则等)
+├── main.py            # 核心拦截逻辑(拦截请求、条件校验、读写本地缓存)
+├── config.py          # 可调整的配置项(缓存目录、目标域名规则等)
+├── start_proxy.bat    # 一键启动代理的脚本(支持隐藏窗口运行)
 └── README.md
 ```
 
 ## 环境依赖
 
-- Python 3.8+
-- [mitmproxy](https://mitmproxy.org/)
-- requests
-
-```bash
-pip install mitmproxy requests
-```
+- **Python 3.8+**:访问 [python.org/downloads](https://www.python.org/downloads/) 下载并安装对应系统的安装包(安装时建议勾选 "Add Python to PATH")。
+- **mitmproxy**:访问 [mitmproxy.org](https://mitmproxy.org/) 下载对应系统的安装包并安装。
 
 ## 配置
 
@@ -54,21 +50,42 @@ REQUEST_TIMEOUT = 5
 
 ## 使用方法
 
-1. 启动代理:
+1. 启动代理,有两种方式:
+
+   **方式一:直接用命令行启动(可以实时看到日志)**
 
    ```bash
    mitmdump -s main.py -p 8888
    ```
 
-2. 让浏览器(建议使用专门跑该游戏的独立浏览器实例/独立用户配置目录)走这个代理:
+   **方式二:双击 `start_proxy.bat`(推荐日常使用)**
+
+   该脚本会以隐藏窗口的方式在后台启动代理,不会弹出黑框命令行窗口。mitmproxy 自身的连接日志会写入脚本同目录下的 `proxy_console.log` 文件,便于事后查看运行状况。
+
+   端口等配置可在 `start_proxy.bat` 顶部的变量区修改:
+
+   ```bat
+   set PROXY_PORT=8888
+   ```
+
+   **关闭隐藏运行的代理**:由于隐藏模式下没有可见窗口,需要通过任务管理器结束 `mitmdump.exe` 进程,或在命令行中执行:
 
    ```bash
-   chrome.exe --proxy-server="127.0.0.1:8888" --user-data-dir="你的独立用户目录路径"
+   netstat -ano | findstr :8888
+   taskkill /PID <对应的PID> /F
+   ```
+
+   **开机自动启动**:将 `start_proxy.bat`(或其快捷方式)放入 `Win+R` → 输入 `shell:startup` 打开的启动文件夹,即可在每次开机后自动静默运行。
+
+2. 让浏览器(建议使用专门跑该游戏的独立浏览器实例，这里推荐SRWare Iron)走这个代理:
+
+   ```bash
+   chrome.exe --proxy-server="127.0.0.1:8888"
    ```
 
 3. 首次启动代理后,访问 `http://mitm.it`,下载并安装对应系统的 mitmproxy CA 证书(用于解密 HTTPS 流量),安装到"受信任的根证书颁发机构"。
 
-4. 重启浏览器,正常游玩游戏。终端会打印以下几种日志,便于确认工作状态:
+4. 重启浏览器,正常游玩游戏。运行日志(命令行方式为终端窗口,`.bat` 隐藏方式为 `proxy_console.log`)会打印以下几种状态,便于确认工作情况:
    - `[首次缓存]`:本地无缓存,已从服务器下载并保存
    - `[命中,304确认未变]`:本地缓存有效,服务器确认无变化,未重新下载
    - `[已更新]`:服务器资源已变化,已重新下载并更新本地缓存
