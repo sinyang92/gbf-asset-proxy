@@ -6,7 +6,10 @@ import logging
 from mitmproxy import http
 import requests
 
-from config import LOCAL_ROOT, TARGET_DOMAIN_PATTERN, REQUEST_TIMEOUT, CACHE_LOG_FILE, UPSTREAM_PROXY
+from config import (
+    LOCAL_ROOT, TARGET_DOMAIN_PATTERN, REQUEST_TIMEOUT, CACHE_LOG_FILE,
+    UPSTREAM_PROXY, TRUST_LOCAL_PATTERN,
+)
 
 PROXIES = {"http": UPSTREAM_PROXY, "https": UPSTREAM_PROXY} if UPSTREAM_PROXY else None
 
@@ -21,6 +24,10 @@ logger.addHandler(logging.StreamHandler())
 
 def is_target(host: str) -> bool:
     return bool(TARGET_DOMAIN_PATTERN.search(host))
+
+
+def is_trust_local(path: str) -> bool:
+    return bool(TRUST_LOCAL_PATTERN.search(path))
 
 
 def get_paths(url_path: str):
@@ -83,6 +90,16 @@ def request(flow: http.HTTPFlow) -> None:
     meta = load_meta(meta_file)
 
     if not (meta and os.path.exists(local_file)):
+        return
+
+    if is_trust_local(flow.request.path):
+        with open(local_file, "rb") as f:
+            content = f.read()
+        flow.response = http.Response.make(
+            200, content,
+            build_headers_from_meta(meta)
+        )
+        logger.info(f"[直接命中,未验证] {flow.request.path}")
         return
 
     headers = {}

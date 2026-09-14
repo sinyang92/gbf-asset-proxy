@@ -12,3 +12,5 @@ UPSTREAM_PROXY = None
 REQUEST_TIMEOUT = 5
 
 CACHE_LOG_FILE = os.path.join(BASE_DIR, "cache_log.txt")
+
+TRUST_LOCAL_PATTERN = re.compile(r"/assets/(img|sound)/")
